@@ -26,17 +26,17 @@ pub fn api_routes() -> Router<Arc<AppState>> {
         .route("/stats", get(get_stats))
         // Bucket operations
         .route("/buckets", get(list_buckets).post(create_bucket))
-        .route("/buckets/{bucket}", get(get_bucket).delete(delete_bucket))
+        .route("/buckets/:bucket", get(get_bucket).delete(delete_bucket))
         // Object listing
-        .route("/buckets/{bucket}/objects", get(list_objects))
+        .route("/buckets/:bucket/objects", get(list_objects))
         // Upload via multipart
-        .route("/buckets/{bucket}/upload", post(upload_object))
+        .route("/buckets/:bucket/upload", post(upload_object))
 }
 
 /// Wildcard routes that MUST be registered at top level (cannot be nested in Axum 0.7)
 pub fn api_wildcard_routes() -> Router<Arc<AppState>> {
     Router::new()
-        .route("/api/object/{*path}", get(get_object).delete(delete_object))
+        .route("/api/object/*path", get(get_object).delete(delete_object))
 }
 
 // ─── S3-Compatible Routes ─────────────────────────────────────────
@@ -44,13 +44,13 @@ pub fn api_wildcard_routes() -> Router<Arc<AppState>> {
 pub fn s3_routes() -> Router<Arc<AppState>> {
     Router::new()
         .route("/s3", get(s3_list_buckets))
-        .route("/s3/{bucket}", get(s3_list_objects).put(s3_create_bucket).delete(s3_delete_bucket))
+        .route("/s3/:bucket", get(s3_list_objects).put(s3_create_bucket).delete(s3_delete_bucket))
 }
 
 /// S3 wildcard routes — must be registered at top level
 pub fn s3_wildcard_routes() -> Router<Arc<AppState>> {
     Router::new()
-        .route("/s3/obj/{*path}", get(s3_get_object).put(s3_put_object).delete(s3_delete_object))
+        .route("/s3/obj/*path", get(s3_get_object).put(s3_put_object).delete(s3_delete_object))
 }
 
 // ─── Stats ───────────────────────────────────────────────────────

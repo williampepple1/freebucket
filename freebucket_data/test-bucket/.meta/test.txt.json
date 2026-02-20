@@ -1,0 +1,9 @@
+{
+  "key": "test.txt",
+  "bucket": "test-bucket",
+  "size": 17,
+  "content_type": "text/plain",
+  "etag": "\"87eaefe827ed19207c2eba7c684c4c23130e3eaf7d3b08ba5202b42dca25d3cf\"",
+  "last_modified": "2026-02-20T23:45:53.936799Z",
+  "metadata": {}
+}
