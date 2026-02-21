@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::path::Path;
 
-use crate::config::Config;
 use crate::storage::{human_readable_size, StorageEngine};
 
 use clap::{Parser, Subcommand};
