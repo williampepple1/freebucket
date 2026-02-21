@@ -4,15 +4,18 @@ mod models;
 mod storage;
 mod handlers;
 mod dashboard;
+mod cli;
 
 use std::sync::Arc;
 use axum::Router;
+use clap::Parser;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::config::Config;
 use crate::storage::StorageEngine;
+use crate::cli::{Cli, Commands};
 
 pub struct AppState {
     pub storage: StorageEngine,
@@ -21,6 +24,20 @@ pub struct AppState {
 
 #[tokio::main]
 async fn main() {
+    let cli = Cli::parse();
+
+    // If no subcommand given, default to serve
+    match &cli.command {
+        None | Some(Commands::Serve { .. }) => {
+            start_server(cli).await;
+        }
+        Some(_) => {
+            cli::run_cli(cli);
+        }
+    }
+}
+
+async fn start_server(cli: Cli) {
     // Initialize tracing
     tracing_subscriber::registry()
         .with(
@@ -30,7 +47,17 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let config = Config::default();
+    let mut config = Config::default();
+
+    // Override from CLI args if serve subcommand
+    if let Some(Commands::Serve { host, port }) = &cli.command {
+        config.host = host.clone();
+        config.port = *port;
+    }
+    if let Some(dir) = cli.data_dir {
+        config.data_dir = dir;
+    }
+
     let storage = StorageEngine::new(&config.data_dir).expect("Failed to initialize storage engine");
 
     tracing::info!("Storage directory: {}", config.data_dir);
