@@ -87,34 +87,34 @@ fn render_dashboard(
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {{
-            --bg-primary: #0a0e1a;
-            --bg-secondary: #111827;
-            --bg-card: #1a1f35;
-            --bg-card-hover: #222845;
-            --bg-input: #151b2e;
-            --border-color: #2a3152;
-            --border-hover: #3d4a7a;
-            --text-primary: #e8ecf4;
-            --text-secondary: #8892a8;
-            --text-muted: #5a6580;
-            --accent-primary: #6366f1;
-            --accent-primary-hover: #818cf8;
-            --accent-glow: rgba(99, 102, 241, 0.3);
-            --accent-secondary: #06b6d4;
-            --accent-success: #10b981;
-            --accent-warning: #f59e0b;
-            --accent-danger: #ef4444;
-            --accent-danger-hover: #f87171;
-            --gradient-primary: linear-gradient(135deg, #6366f1, #8b5cf6, #06b6d4);
-            --gradient-card: linear-gradient(145deg, rgba(26,31,53,0.9), rgba(17,24,39,0.95));
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
-            --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
-            --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
-            --shadow-glow: 0 0 20px var(--accent-glow);
-            --radius-sm: 8px;
-            --radius-md: 12px;
-            --radius-lg: 16px;
-            --radius-xl: 20px;
+            --bg-primary: #FDF6E3;
+            --bg-secondary: #FFF9ED;
+            --bg-card: #FFFFFF;
+            --bg-card-hover: #FFF5D6;
+            --bg-input: #FFFCF5;
+            --border-color: #E8DFC8;
+            --border-hover: #D4C9A8;
+            --text-primary: #3D3322;
+            --text-secondary: #7A6E56;
+            --text-muted: #A89B7E;
+            --accent-primary: #C8842E;
+            --accent-primary-hover: #E09A3A;
+            --accent-glow: rgba(200, 132, 46, 0.2);
+            --accent-secondary: #8B7355;
+            --accent-success: #5D8C3E;
+            --accent-warning: #D4940A;
+            --accent-danger: #C05040;
+            --accent-danger-hover: #D46050;
+            --gradient-primary: linear-gradient(135deg, #C8842E, #E0A84C);
+            --gradient-card: linear-gradient(145deg, #FFFFFF, #FFFAF0);
+            --shadow-sm: 0 1px 4px rgba(60,50,30,0.08);
+            --shadow-md: 0 4px 16px rgba(60,50,30,0.1);
+            --shadow-lg: 0 8px 32px rgba(60,50,30,0.12);
+            --shadow-glow: 0 0 16px var(--accent-glow);
+            --radius-sm: 10px;
+            --radius-md: 14px;
+            --radius-lg: 18px;
+            --radius-xl: 24px;
         }}
 
         * {{ margin:0; padding:0; box-sizing:border-box; }}
@@ -127,23 +127,22 @@ fn render_dashboard(
             overflow-x: hidden;
         }}
 
-        /* Animated background */
+        /* Soft warm background wash */
         body::before {{
             content: '';
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             background:
-                radial-gradient(ellipse 80% 50% at 20% 20%, rgba(99,102,241,0.08), transparent),
-                radial-gradient(ellipse 60% 40% at 80% 80%, rgba(6,182,212,0.06), transparent),
-                radial-gradient(ellipse 50% 50% at 50% 50%, rgba(139,92,246,0.04), transparent);
+                radial-gradient(ellipse 70% 50% at 15% 10%, rgba(248,220,160,0.35), transparent),
+                radial-gradient(ellipse 50% 40% at 85% 85%, rgba(230,200,140,0.2), transparent);
             pointer-events: none;
             z-index: 0;
         }}
 
         /* Header */
         .header {{
-            background: rgba(17,24,39,0.8);
-            backdrop-filter: blur(20px);
+            background: rgba(255,250,235,0.85);
+            backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--border-color);
             padding: 0 2rem;
             height: 64px;
@@ -191,8 +190,8 @@ fn render_dashboard(
             font-size: 0.65rem;
             padding: 2px 8px;
             border-radius: 20px;
-            background: rgba(99,102,241,0.15);
-            color: var(--accent-primary-hover);
+            background: rgba(200,132,46,0.12);
+            color: var(--accent-primary);
             font-weight: 600;
             letter-spacing: 0.5px;
             text-transform: uppercase;
@@ -344,7 +343,7 @@ fn render_dashboard(
 
         .delete-btn:hover {{
             color: var(--accent-danger);
-            background: rgba(239,68,68,0.1);
+            background: rgba(192,80,64,0.08);
         }}
 
         .btn-icon svg {{
@@ -403,7 +402,7 @@ fn render_dashboard(
             width: 44px;
             height: 44px;
             border-radius: var(--radius-md);
-            background: rgba(99,102,241,0.12);
+            background: rgba(200,132,46,0.1);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -444,7 +443,7 @@ fn render_dashboard(
             align-items: center;
             padding: 3px 10px;
             border-radius: 20px;
-            background: rgba(6,182,212,0.1);
+            background: rgba(139,115,85,0.08);
             color: var(--accent-secondary);
             margin-top: 0.5rem;
         }}
@@ -455,7 +454,7 @@ fn render_dashboard(
             padding: 4rem 2rem;
             border: 2px dashed var(--border-color);
             border-radius: var(--radius-xl);
-            background: rgba(17,24,39,0.3);
+            background: rgba(200,132,46,0.05);
         }}
 
         .empty-icon {{
@@ -463,7 +462,7 @@ fn render_dashboard(
             height: 72px;
             margin: 0 auto 1.5rem;
             border-radius: var(--radius-lg);
-            background: rgba(99,102,241,0.08);
+            background: rgba(200,132,46,0.07);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -493,7 +492,7 @@ fn render_dashboard(
             display: none;
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.35);
             backdrop-filter: blur(4px);
             z-index: 1000;
             align-items: center;
@@ -634,7 +633,7 @@ fn render_dashboard(
         }}
 
         .object-row:hover {{
-            background: rgba(255,255,255,0.03);
+            background: rgba(200,132,46,0.04);
         }}
 
         .object-row-header {{
@@ -643,11 +642,11 @@ fn render_dashboard(
             color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            background: rgba(0,0,0,0.2);
+            background: rgba(200,132,46,0.05);
         }}
 
         .object-row-header:hover {{
-            background: rgba(0,0,0,0.2);
+            background: rgba(200,132,46,0.05);
         }}
 
         .object-key {{
@@ -703,7 +702,7 @@ fn render_dashboard(
         .upload-area:hover,
         .upload-area.drag-over {{
             border-color: var(--accent-primary);
-            background: rgba(99,102,241,0.05);
+            background: rgba(200,132,46,0.04);
         }}
 
         .upload-area svg {{
@@ -750,15 +749,15 @@ fn render_dashboard(
         }}
 
         .toast.success {{
-            background: linear-gradient(135deg, #059669, #10b981);
+            background: linear-gradient(135deg, #4a8c2e, #5D8C3E);
         }}
 
         .toast.error {{
-            background: linear-gradient(135deg, #dc2626, #ef4444);
+            background: linear-gradient(135deg, #b04030, #C05040);
         }}
 
         .toast.info {{
-            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            background: linear-gradient(135deg, #b07820, #C8842E);
         }}
 
         @keyframes toastIn {{
