@@ -8,6 +8,7 @@ mod cli;
 
 use std::sync::Arc;
 use axum::Router;
+use axum::extract::DefaultBodyLimit;
 use clap::Parser;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
@@ -75,6 +76,7 @@ async fn start_server(cli: Cli) {
         // S3-compatible routes (no nesting needed)
         .merge(handlers::s3_routes())
         .merge(handlers::s3_wildcard_routes())
+        .layer(DefaultBodyLimit::max(config.max_upload_size))
         .layer(CorsLayer::permissive())
         .layer(TraceLayer::new_for_http())
         .with_state(state);

@@ -53,6 +53,7 @@ pub struct ListObjectsQuery {
     pub prefix: Option<String>,
     pub delimiter: Option<String>,
     pub max_keys: Option<u32>,
+    #[allow(dead_code)]
     pub continuation_token: Option<String>,
 }
 

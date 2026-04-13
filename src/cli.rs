@@ -95,14 +95,18 @@ pub enum Commands {
 }
 
 pub fn run_cli(cli: Cli) {
-    let data_dir = cli.data_dir
+    let data_dir = cli
+        .data_dir
         .or_else(|| std::env::var("FREEBUCKET_DATA_DIR").ok())
         .unwrap_or_else(|| "./freebucket_data".to_string());
 
     let storage = match StorageEngine::new(&data_dir) {
         Ok(s) => s,
         Err(e) => {
-            eprintln!("Error: Failed to initialize storage at '{}': {:?}", data_dir, e);
+            eprintln!(
+                "Error: Failed to initialize storage at '{}': {:?}",
+                data_dir, e
+            );
             std::process::exit(1);
         }
     };
@@ -110,29 +114,28 @@ pub fn run_cli(cli: Cli) {
     match cli.command.unwrap() {
         Commands::Serve { .. } => unreachable!("Serve is handled in main"),
 
-        Commands::MakeBucket { name, region } => {
-            match storage.create_bucket(&name, &region) {
-                Ok(bucket) => {
-                    println!("✓ Bucket '{}' created successfully", bucket.name);
-                    println!("  Region:  {}", bucket.region);
-                    println!("  Created: {}", bucket.created_at.format("%Y-%m-%d %H:%M:%S"));
-                }
-                Err(e) => {
-                    eprintln!("✗ {}", format_error(&e));
-                    std::process::exit(1);
-                }
+        Commands::MakeBucket { name, region } => match storage.create_bucket(&name, &region) {
+            Ok(bucket) => {
+                println!("✓ Bucket '{}' created successfully", bucket.name);
+                println!("  Region:  {}", bucket.region);
+                println!(
+                    "  Created: {}",
+                    bucket.created_at.format("%Y-%m-%d %H:%M:%S")
+                );
             }
-        }
+            Err(e) => {
+                eprintln!("✗ {}", format_error(&e));
+                std::process::exit(1);
+            }
+        },
 
-        Commands::RemoveBucket { name } => {
-            match storage.delete_bucket(&name) {
-                Ok(()) => println!("✓ Bucket '{}' deleted", name),
-                Err(e) => {
-                    eprintln!("✗ {}", format_error(&e));
-                    std::process::exit(1);
-                }
+        Commands::RemoveBucket { name } => match storage.delete_bucket(&name) {
+            Ok(()) => println!("✓ Bucket '{}' deleted", name),
+            Err(e) => {
+                eprintln!("✗ {}", format_error(&e));
+                std::process::exit(1);
             }
-        }
+        },
 
         Commands::List { bucket, prefix } => {
             match bucket {
@@ -140,10 +143,12 @@ pub fn run_cli(cli: Cli) {
                     // List all buckets
                     let buckets = storage.list_buckets();
                     if buckets.is_empty() {
-                        println!("No buckets found. Create one with: freebucket make-bucket <name>");
+                        println!(
+                            "No buckets found. Create one with: freebucket make-bucket <name>"
+                        );
                         return;
                     }
-                    println!("{:<30} {:>8} {:>12}  {}", "BUCKET", "OBJECTS", "SIZE", "CREATED");
+                    println!("{:<30} {:>8} {:>12}  CREATED", "BUCKET", "OBJECTS", "SIZE");
                     println!("{}", "─".repeat(70));
                     for b in &buckets {
                         println!(
@@ -163,17 +168,24 @@ pub fn run_cli(cli: Cli) {
                     match storage.list_objects(&bucket_name, prefix_str, None, 1000) {
                         Ok(result) => {
                             if result.objects.is_empty() {
-                                println!("No objects in bucket '{}'{}", bucket_name,
-                                    if !prefix_str.is_empty() { format!(" with prefix '{}'", prefix_str) } else { String::new() });
+                                println!(
+                                    "No objects in bucket '{}'{}",
+                                    bucket_name,
+                                    if !prefix_str.is_empty() {
+                                        format!(" with prefix '{}'", prefix_str)
+                                    } else {
+                                        String::new()
+                                    }
+                                );
                                 return;
                             }
-                            println!("{:<50} {:>12}  {}", "KEY", "SIZE", "LAST MODIFIED");
+                            println!("{:<50} {:>12}  LAST MODIFIED", "KEY", "SIZE");
                             println!("{}", "─".repeat(85));
                             for obj in &result.objects {
                                 println!(
                                     "{:<50} {:>12}  {}",
                                     if obj.key.len() > 48 {
-                                        format!("…{}", &obj.key[obj.key.len()-47..])
+                                        format!("…{}", &obj.key[obj.key.len() - 47..])
                                     } else {
                                         obj.key.clone()
                                     },
@@ -193,7 +205,10 @@ pub fn run_cli(cli: Cli) {
             }
         }
 
-        Commands::Put { source, destination } => {
+        Commands::Put {
+            source,
+            destination,
+        } => {
             // Parse destination as bucket/key
             let (bucket, key) = match destination.find('/') {
                 Some(pos) => (&destination[..pos], &destination[pos + 1..]),
@@ -215,7 +230,11 @@ pub fn run_cli(cli: Cli) {
                     match storage.put_object(&destination, &filename, &data, None, HashMap::new()) {
                         Ok(meta) => {
                             println!("✓ Uploaded '{}' → {}/{}", source, destination, filename);
-                            println!("  Size: {}  ETag: {}", human_readable_size(meta.size), meta.etag);
+                            println!(
+                                "  Size: {}  ETag: {}",
+                                human_readable_size(meta.size),
+                                meta.etag
+                            );
                         }
                         Err(e) => {
                             eprintln!("✗ {}", format_error(&e));
@@ -237,7 +256,11 @@ pub fn run_cli(cli: Cli) {
             match storage.put_object(bucket, key, &data, None, HashMap::new()) {
                 Ok(meta) => {
                     println!("✓ Uploaded '{}' → {}/{}", source, bucket, key);
-                    println!("  Size: {}  ETag: {}", human_readable_size(meta.size), meta.etag);
+                    println!(
+                        "  Size: {}  ETag: {}",
+                        human_readable_size(meta.size),
+                        meta.etag
+                    );
                 }
                 Err(e) => {
                     eprintln!("✗ {}", format_error(&e));
@@ -257,14 +280,17 @@ pub fn run_cli(cli: Cli) {
 
             match storage.get_object(bucket, key) {
                 Ok((meta, data)) => {
-                    let out_path = output.unwrap_or_else(|| {
-                        key.rsplit('/').next().unwrap_or(key).to_string()
-                    });
+                    let out_path =
+                        output.unwrap_or_else(|| key.rsplit('/').next().unwrap_or(key).to_string());
 
                     match std::fs::write(&out_path, &data) {
                         Ok(()) => {
                             println!("✓ Downloaded {}/{} → '{}'", bucket, key, out_path);
-                            println!("  Size: {}  Type: {}", human_readable_size(meta.size), meta.content_type);
+                            println!(
+                                "  Size: {}  Type: {}",
+                                human_readable_size(meta.size),
+                                meta.content_type
+                            );
                         }
                         Err(e) => {
                             eprintln!("✗ Cannot write to '{}': {}", out_path, e);
@@ -307,30 +333,32 @@ pub fn run_cli(cli: Cli) {
             println!("  Data dir: {}", data_dir);
         }
 
-        Commands::Info { bucket } => {
-            match storage.get_bucket(&bucket) {
-                Ok(b) => {
-                    println!("Bucket: {}", b.name);
-                    println!("{}", "─".repeat(35));
-                    println!("  Region:   {}", b.region);
-                    println!("  Objects:  {}", b.object_count);
-                    println!("  Size:     {}", human_readable_size(b.total_size));
-                    println!("  Created:  {}", b.created_at.format("%Y-%m-%d %H:%M:%S"));
-                }
-                Err(e) => {
-                    eprintln!("✗ {}", format_error(&e));
-                    std::process::exit(1);
-                }
+        Commands::Info { bucket } => match storage.get_bucket(&bucket) {
+            Ok(b) => {
+                println!("Bucket: {}", b.name);
+                println!("{}", "─".repeat(35));
+                println!("  Region:   {}", b.region);
+                println!("  Objects:  {}", b.object_count);
+                println!("  Size:     {}", human_readable_size(b.total_size));
+                println!("  Created:  {}", b.created_at.format("%Y-%m-%d %H:%M:%S"));
             }
-        }
+            Err(e) => {
+                eprintln!("✗ {}", format_error(&e));
+                std::process::exit(1);
+            }
+        },
     }
 }
 
 fn format_error(e: &crate::error::AppError) -> String {
     match e {
         crate::error::AppError::BucketNotFound(name) => format!("Bucket '{}' not found", name),
-        crate::error::AppError::BucketAlreadyExists(name) => format!("Bucket '{}' already exists", name),
-        crate::error::AppError::ObjectNotFound { bucket, key } => format!("Object '{}/{}' not found", bucket, key),
+        crate::error::AppError::BucketAlreadyExists(name) => {
+            format!("Bucket '{}' already exists", name)
+        }
+        crate::error::AppError::ObjectNotFound { bucket, key } => {
+            format!("Object '{}/{}' not found", bucket, key)
+        }
         crate::error::AppError::InvalidBucketName(msg) => format!("Invalid bucket name: {}", msg),
         crate::error::AppError::InvalidObjectKey(msg) => format!("Invalid key: {}", msg),
         crate::error::AppError::StorageError(msg) => format!("Storage error: {}", msg),

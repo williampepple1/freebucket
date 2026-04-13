@@ -1067,10 +1067,10 @@ fn render_dashboard(
                         '<span class="object-size">' + size + '</span>' +
                         '<span class="object-date">' + date + '</span>' +
                         '<div class="object-actions">' +
-                        '<button class="btn-icon" onclick="downloadObject(\'' + escapeHtml(obj.key) + '\')" title="Download">' +
+                        '<button class="btn-icon" data-action="download" data-key="' + escapeAttr(obj.key) + '" title="Download">' +
                         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>' +
                         '</button>' +
-                        '<button class="btn-icon delete-btn" onclick="deleteObject(\'' + escapeHtml(obj.key) + '\')" title="Delete">' +
+                        '<button class="btn-icon delete-btn" data-action="delete" data-key="' + escapeAttr(obj.key) + '" title="Delete">' +
                         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>' +
                         '</button>' +
                         '</div></div>';
@@ -1082,7 +1082,7 @@ fn render_dashboard(
         }}
 
         async function downloadObject(key) {{
-            const url = API + '/object/' + encodeURIComponent(currentBucket) + '/' + encodeURIComponent(key);
+            const url = API + '/object/' + encodePath(currentBucket) + '/' + encodePath(key);
             const a = document.createElement('a');
             a.href = url;
             a.download = key.split('/').pop();
@@ -1095,7 +1095,7 @@ fn render_dashboard(
             if (!confirm('Delete object "' + key + '"?')) return;
 
             try {{
-                const res = await fetch(API + '/object/' + encodeURIComponent(currentBucket) + '/' + encodeURIComponent(key), {{
+                const res = await fetch(API + '/object/' + encodePath(currentBucket) + '/' + encodePath(key), {{
                     method: 'DELETE'
                 }});
 
@@ -1174,6 +1174,24 @@ fn render_dashboard(
             div.textContent = str;
             return div.innerHTML;
         }}
+
+        function escapeAttr(str) {{
+            return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }}
+
+        function encodePath(str) {{
+            return str.split('/').map(segment => encodeURIComponent(segment)).join('/');
+        }}
+
+        // Event delegation for object action buttons
+        document.getElementById('object-list-body').addEventListener('click', function(e) {{
+            const btn = e.target.closest('[data-action]');
+            if (!btn) return;
+            const action = btn.dataset.action;
+            const key = btn.dataset.key;
+            if (action === 'download') downloadObject(key);
+            else if (action === 'delete') deleteObject(key);
+        }});
 
         // Close modals on overlay click
         document.querySelectorAll('.modal-overlay').forEach(overlay => {{

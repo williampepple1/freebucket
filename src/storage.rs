@@ -17,11 +17,21 @@ pub struct StorageEngine {
     buckets: RwLock<HashMap<String, Bucket>>,
 }
 
+struct WalkContext<'a> {
+    root: &'a Path,
+    bucket: &'a str,
+    prefix: &'a str,
+    delimiter: Option<&'a str>,
+    objects: &'a mut Vec<ObjectMeta>,
+    common_prefixes: &'a mut Vec<String>,
+}
+
 impl StorageEngine {
     /// Initialize the storage engine, creating the root data directory if needed
     pub fn new(root: &str) -> Result<Self, AppError> {
         let root = PathBuf::from(root);
-        fs::create_dir_all(&root).map_err(|e| AppError::StorageError(format!("Cannot create data dir: {}", e)))?;
+        fs::create_dir_all(&root)
+            .map_err(|e| AppError::StorageError(format!("Cannot create data dir: {}", e)))?;
 
         let engine = Self {
             root: root.clone(),
@@ -85,7 +95,10 @@ impl StorageEngine {
 
     fn object_meta_path(&self, bucket: &str, key: &str) -> PathBuf {
         let safe_key = key.replace('/', "__SLASH__");
-        self.root.join(bucket).join(".meta").join(format!("{}.json", safe_key))
+        self.root
+            .join(bucket)
+            .join(".meta")
+            .join(format!("{}.json", safe_key))
     }
 
     // ─── Bucket Operations ────────────────────────────────────────
@@ -96,9 +109,13 @@ impl StorageEngine {
                 "Bucket name must be between 3 and 63 characters".to_string(),
             ));
         }
-        if !name.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-' || c == '.') {
+        if !name
+            .chars()
+            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-' || c == '.')
+        {
             return Err(AppError::InvalidBucketName(
-                "Bucket name can only contain lowercase letters, numbers, hyphens, and periods".to_string(),
+                "Bucket name can only contain lowercase letters, numbers, hyphens, and periods"
+                    .to_string(),
             ));
         }
         if name.starts_with('-') || name.ends_with('-') {
@@ -160,10 +177,9 @@ impl StorageEngine {
             return Err(AppError::BucketNotFound(name.to_string()));
         }
 
-        // Check if empty
         let objects_dir = self.bucket_path(name).join("objects");
         if objects_dir.exists() {
-            let count = fs::read_dir(&objects_dir)?.count();
+            let (count, _) = Self::dir_stats(&objects_dir);
             if count > 0 {
                 return Err(AppError::StorageError(
                     "Bucket is not empty. Delete all objects first.".to_string(),
@@ -202,13 +218,11 @@ impl StorageEngine {
         }
 
         // Determine content type
-        let content_type = content_type
-            .map(|s| s.to_string())
-            .unwrap_or_else(|| {
-                mime_guess::from_path(key)
-                    .first_or_octet_stream()
-                    .to_string()
-            });
+        let content_type = content_type.map(|s| s.to_string()).unwrap_or_else(|| {
+            mime_guess::from_path(key)
+                .first_or_octet_stream()
+                .to_string()
+        });
 
         // Compute ETag (SHA-256 hash)
         let mut hasher = Sha256::new();
@@ -382,7 +396,15 @@ impl StorageEngine {
         let mut common_prefixes = Vec::new();
 
         if objects_dir.exists() {
-            self.walk_objects(&objects_dir, &objects_dir, bucket, prefix, delimiter, &mut objects, &mut common_prefixes)?;
+            let mut ctx = WalkContext {
+                root: &objects_dir,
+                bucket,
+                prefix,
+                delimiter,
+                objects: &mut objects,
+                common_prefixes: &mut common_prefixes,
+            };
+            self.walk_objects(&objects_dir, &mut ctx)?;
         }
 
         // Sort by key
@@ -403,16 +425,7 @@ impl StorageEngine {
         })
     }
 
-    fn walk_objects(
-        &self,
-        dir: &Path,
-        root: &Path,
-        bucket: &str,
-        prefix: &str,
-        delimiter: Option<&str>,
-        objects: &mut Vec<ObjectMeta>,
-        common_prefixes: &mut Vec<String>,
-    ) -> Result<(), AppError> {
+    fn walk_objects(&self, dir: &Path, ctx: &mut WalkContext<'_>) -> Result<(), AppError> {
         if !dir.exists() {
             return Ok(());
         }
@@ -420,31 +433,29 @@ impl StorageEngine {
         for entry in fs::read_dir(dir)?.flatten() {
             let path = entry.path();
             if path.is_dir() {
-                self.walk_objects(&path, root, bucket, prefix, delimiter, objects, common_prefixes)?;
+                self.walk_objects(&path, ctx)?;
             } else {
                 let rel = path
-                    .strip_prefix(root)
+                    .strip_prefix(ctx.root)
                     .unwrap()
                     .to_string_lossy()
                     .replace('\\', "/");
 
-                if !rel.starts_with(prefix) {
+                if !rel.starts_with(ctx.prefix) {
                     continue;
                 }
 
-                // Handle delimiter (folder simulation)
-                if let Some(delim) = delimiter {
-                    let after_prefix = &rel[prefix.len()..];
+                if let Some(delim) = ctx.delimiter {
+                    let after_prefix = &rel[ctx.prefix.len()..];
                     if let Some(pos) = after_prefix.find(delim) {
-                        let cp = format!("{}{}{}", prefix, &after_prefix[..pos], delim);
-                        common_prefixes.push(cp);
+                        let cp = format!("{}{}{}", ctx.prefix, &after_prefix[..pos], delim);
+                        ctx.common_prefixes.push(cp);
                         continue;
                     }
                 }
 
-                // Load metadata
-                if let Ok(meta) = self.get_object_meta(bucket, &rel) {
-                    objects.push(meta);
+                if let Ok(meta) = self.get_object_meta(ctx.bucket, &rel) {
+                    ctx.objects.push(meta);
                 }
             }
         }
